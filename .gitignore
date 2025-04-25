@@ -1,2 +1,7 @@
 .env
+<<<<<<< HEAD
 __pycache__
+=======
+__pycache__.env
+.env
+>>>>>>> 54f8f94 (Remove .env from repo and add to .gitignore)
