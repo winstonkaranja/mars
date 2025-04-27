@@ -10,6 +10,7 @@ from matplotlib import pyplot as plt
 from ultralytics import YOLO
 from langchain_anthropic import ChatAnthropic
 import boto3
+from PIL import Image
 
 from weather import WeatherData
 
@@ -131,7 +132,10 @@ def weather_node(input_state: State) -> WeatherDataOutputModel:
 def YOLO_analysis(input_state: State) -> YoloAnalysisOutputModel:
     image_path = input_state.image_key
     image_bytes = read_image_from_s3("ndvi-images-bucket", image_path)
-    image = prepare_image_for_yolo(image_bytes)
+    if image_path.endswith(("tif", "tiff")):
+
+        # Prepare for YOLO, selecting Red (band 3), Green (band 2), and NIR (band 4)
+        image = prepare_image_for_yolo(image_bytes, select_channels=[2, 1, 3])
     yolo_state = YoloAnalysisOutputModel()
     output_bucket = "ndvi-images-bucket"  # Update with your output bucket name
 
@@ -146,13 +150,19 @@ def YOLO_analysis(input_state: State) -> YoloAnalysisOutputModel:
 
         first_result = results[0]
         
-        # Instead of saving locally, we'll render the annotated image and save to S3
         # Get the annotated image from the result
         annotated_img = first_result.plot()
-        
+
+        # Convert to numpy array if it's a PIL.Image (if necessary)
+        if isinstance(annotated_img, Image.Image):
+            annotated_img = np.array(annotated_img)
+
+        # Ensure the annotated image is contiguous in memory
+        annotated_img_cont = np.ascontiguousarray(annotated_img)
+
         # Save the annotated image to S3
         img_bytes = io.BytesIO()
-        plt.imsave(img_bytes, annotated_img, format='PNG')
+        plt.imsave(img_bytes, annotated_img_cont, format='PNG')
         img_bytes.seek(0)
         
         # Generate S3 path

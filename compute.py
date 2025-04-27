@@ -34,35 +34,81 @@ from PIL import Image
 # YOLO HELPER
 # -----------------------------------------------------------------------------
 
-def prepare_image_for_yolo(image: np.ndarray) -> np.ndarray:
+def prepare_image_for_yolo(image, select_channels: list = None) -> np.ndarray:
     """
-    Prepare an image (from any format) to (H, W, 3) uint8 format for YOLO models.
+    Prepare an image (from any format) into a PNG-like (H, W, 3) uint8 format for YOLO models.
     
     Args:
-        image (np.ndarray): Input image array.
+        image: Input image - can be np.ndarray or PIL.Image.
+        select_channels (list, optional): Specific channels to select if image has more than 3 channels.
         
     Returns:
-        np.ndarray: 3-channel (H, W, 3) image ready for YOLO.
+        np.ndarray: 3-channel (H, W, 3) uint8 image ready for YOLO.
     """
-    if image is None:
-        raise ValueError("Input image is None")
-
-    # If (C, H, W) format, convert to (H, W, C)
-    if image.ndim == 3 and image.shape[0] in [1, 3]:
-        image = image.transpose((1, 2, 0))
-
-    # If grayscale, expand to 3 channels
-    if image.ndim == 2:  # (H, W)
-        image = np.stack([image] * 3, axis=-1)  # (H, W, 3)
-    elif image.shape[2] == 1:  # (H, W, 1)
-        image = np.repeat(image, 3, axis=2)  # (H, W, 3)
-
-    # Normalize to uint8 if needed
-    if image.dtype != np.uint8:
-        image = (255 * (image / image.max())).astype(np.uint8)
-
-    return image
-
+    # Handle PIL Image
+    if isinstance(image, Image.Image):
+        # Already a PIL image, convert to RGB if not already
+        if image.mode != 'RGB':
+            image = image.convert('RGB')
+        # Convert to numpy array
+        return np.ascontiguousarray(np.array(image))
+    
+    # For numpy arrays (like from TIFF files)
+    if isinstance(image, np.ndarray):
+        # Handle different dimensionality and channel arrangements
+        if image.ndim == 2:  # Single channel
+            rgb_image = np.stack([image, image, image], axis=2)
+        elif image.ndim == 3:
+            # If (C, H, W) format, convert to (H, W, C)
+            if image.shape[0] <= 5 and image.shape[0] < min(image.shape[1], image.shape[2]):
+                image = image.transpose(1, 2, 0)
+            
+            # Handle multichannel images (like 5-band TIFF)
+            if image.shape[2] > 3:
+                if select_channels is not None and len(select_channels) == 3:
+                    # Create a new array with just the selected channels
+                    rgb_channels = []
+                    for ch in select_channels[:3]:
+                        # Safely access channels
+                        if ch < image.shape[2]:
+                            rgb_channels.append(image[:, :, ch])
+                        else:
+                            # Fallback to first channel if index is out of bounds
+                            rgb_channels.append(image[:, :, 0])
+                    
+                    rgb_image = np.stack(rgb_channels, axis=2)
+                else:
+                    # Default to first 3 channels
+                    rgb_image = image[:, :, :3]
+            else:
+                rgb_image = image
+                
+        # Normalize non-uint8 data
+        if rgb_image.dtype != np.uint8:
+            # Normalize to 0-255 range
+            min_val = np.min(rgb_image)
+            max_val = np.max(rgb_image)
+            if max_val > min_val:
+                rgb_image = ((rgb_image - min_val) * 255.0 / (max_val - min_val)).astype(np.uint8)
+            else:
+                rgb_image = np.ones_like(rgb_image, dtype=np.uint8) * 128
+        
+        # Convert numpy array to PIL Image and back - this is the key step!
+        # PIL handles all the internal complexity of proper image formatting
+        pil_image = Image.fromarray(rgb_image)
+        
+        # Convert to in-memory PNG and back to ensure format compatibility
+        buffer = BytesIO()
+        pil_image.save(buffer, format='PNG')
+        buffer.seek(0)
+        
+        # Load the PNG back
+        png_image = Image.open(buffer)
+        
+        # Convert to numpy array and ensure contiguity
+        return np.ascontiguousarray(np.array(png_image))
+    
+    raise ValueError("Unsupported image type. Provide either PIL.Image or numpy.ndarray")
 
 
 # -----------------------------------------------------------------------------
@@ -102,7 +148,8 @@ def read_image_from_s3(bucket_name, key):
     key_lower = key.lower()
     if key_lower.endswith(('.tif', '.tiff')):
         # Load TIFF image using tifffile and convert to float32 NumPy array
-        image = tiff.imread(file_obj).astype(np.float32)
+        im = tiff.imread(file_obj).astype(np.float32)
+        image = np.ascontiguousarray(im)
     elif key_lower.endswith(('.jpg', '.jpeg')):
         # Load JPEG image using PIL
         image = Image.open(file_obj)
