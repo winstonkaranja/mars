@@ -96,7 +96,7 @@ class State(InputStateModel, OutputStateModel):
 
 
 def check_for_tiff(input_state: InputStateModel):
-    if input_state.image_key.endswith(".tiff"):
+    if input_state.image_key.endswith([".tif", ".tiff"]):
         return "NDVI_pipeline"
     else:
         return "YOLO_analysis"
