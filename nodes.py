@@ -131,11 +131,11 @@ def weather_node(input_state: State) -> WeatherDataOutputModel:
 
 def YOLO_analysis(input_state: State) -> YoloAnalysisOutputModel:
     image_path = input_state.image_key
-    image_bytes = read_image_from_s3("ndvi-images-bucket", image_path)
+    image = read_image_from_s3("ndvi-images-bucket", image_path)
     if image_path.endswith(("tif", "tiff")):
 
         # Prepare for YOLO, selecting Red (band 3), Green (band 2), and NIR (band 4)
-        image = prepare_image_for_yolo(image_bytes, select_channels=[2, 1, 3])
+        image = prepare_image_for_yolo(image, select_channels=[2, 1, 3])
     yolo_state = YoloAnalysisOutputModel()
     output_bucket = "ndvi-images-bucket"  # Update with your output bucket name
 
