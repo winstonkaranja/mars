@@ -271,7 +271,7 @@ def NDVI_analysis(input_state: State) -> NDVIOutputModel:
 
 def Maui(input_state: State) -> MauiRecommendationModel:
     model = ChatAnthropic(
-        model_name="claude-3-haiku-20240307",
+        model_name="claude-3-7-sonnet",
         temperature=0.3,
         api_key=os.getenv("ANTHROPIC_API_KEY")
     )
