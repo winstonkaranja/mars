@@ -29,6 +29,34 @@ from io import BytesIO
 from PIL import Image
 
 
+
+# -----------------------------------------------------------------------------
+# YOLO HELPER
+# -----------------------------------------------------------------------------
+
+def read_image_for_yolo(image_bytes: bytes) -> np.ndarray:
+    """
+    Reads an image from bytes and ensures it is 3-channel RGB for YOLO input.
+
+    Args:
+        image_bytes (bytes): Image data in bytes format.
+
+    Returns:
+        np.ndarray: 3-channel RGB image ready for YOLO prediction.
+    """
+    try:
+        # Load image
+        img = Image.open(BytesIO(image_bytes))
+        img = img.convert('RGB')  # Force to 3 channels directly
+        
+        # Convert to numpy array
+        image_np = np.array(img)
+
+        return image_np
+    except Exception as e:
+        raise ValueError(f"Failed to read image for YOLO: {e}")
+
+
 # -----------------------------------------------------------------------------
 # S3 OPERATIONS
 # -----------------------------------------------------------------------------
