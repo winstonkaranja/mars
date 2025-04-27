@@ -74,13 +74,13 @@ Example
 
 ```python
 
-from langgraph_sdk import Client
-
 #Initialize the client
-advisor_graph = Client(url = url, api_key = api_key)
+from langgraph_sdk import get_client
+
+client = get_client(url="https://ht-vacant-providence-60-b70b203b735b596eac574071f7251ad0.us.langgraph.app", api_key="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")
 
 #Simple invocation example
-result = advisor_graph.invoke(
+result = client.invoke(
     {
         user_id="xyz",
         coordinates=LocationModel(latitude=37.7749, longitude=-122.4194),
