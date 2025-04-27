@@ -34,27 +34,35 @@ from PIL import Image
 # YOLO HELPER
 # -----------------------------------------------------------------------------
 
-def read_image_for_yolo(image_bytes: bytes) -> np.ndarray:
+def prepare_image_for_yolo(image: np.ndarray) -> np.ndarray:
     """
-    Reads an image from bytes and ensures it is 3-channel RGB for YOLO input.
-
+    Prepare an image (from any format) to (H, W, 3) uint8 format for YOLO models.
+    
     Args:
-        image_bytes (bytes): Image data in bytes format.
-
-    Returns:
-        np.ndarray: 3-channel RGB image ready for YOLO prediction.
-    """
-    try:
-        # Load image
-        img = Image.open(BytesIO(image_bytes))
-        img = img.convert('RGB')  # Force to 3 channels directly
+        image (np.ndarray): Input image array.
         
-        # Convert to numpy array
-        image_np = np.array(img)
+    Returns:
+        np.ndarray: 3-channel (H, W, 3) image ready for YOLO.
+    """
+    if image is None:
+        raise ValueError("Input image is None")
 
-        return image_np
-    except Exception as e:
-        raise ValueError(f"Failed to read image for YOLO: {e}")
+    # If (C, H, W) format, convert to (H, W, C)
+    if image.ndim == 3 and image.shape[0] in [1, 3]:
+        image = image.transpose((1, 2, 0))
+
+    # If grayscale, expand to 3 channels
+    if image.ndim == 2:  # (H, W)
+        image = np.stack([image] * 3, axis=-1)  # (H, W, 3)
+    elif image.shape[2] == 1:  # (H, W, 1)
+        image = np.repeat(image, 3, axis=2)  # (H, W, 3)
+
+    # Normalize to uint8 if needed
+    if image.dtype != np.uint8:
+        image = (255 * (image / image.max())).astype(np.uint8)
+
+    return image
+
 
 
 # -----------------------------------------------------------------------------

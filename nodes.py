@@ -13,7 +13,7 @@ import boto3
 
 from weather import WeatherData
 
-from compute import full_image_processing_pipeline, read_image_from_s3, estimate_cwr_from_ndvi_and_weather, ndvi_to_kc, read_image_for_yolo
+from compute import full_image_processing_pipeline, read_image_from_s3, estimate_cwr_from_ndvi_and_weather, ndvi_to_kc, prepare_image_for_yolo
 
 
 # S3 helper function for saving files
@@ -131,7 +131,7 @@ def weather_node(input_state: State) -> WeatherDataOutputModel:
 def YOLO_analysis(input_state: State) -> YoloAnalysisOutputModel:
     image_path = input_state.image_key
     image_bytes = read_image_from_s3("ndvi-images-bucket", image_path)
-    image = read_image_for_yolo(image_bytes)
+    image = prepare_image_for_yolo(image_bytes)
     yolo_state = YoloAnalysisOutputModel()
     output_bucket = "ndvi-images-bucket"  # Update with your output bucket name
 
