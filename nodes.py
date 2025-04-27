@@ -249,7 +249,7 @@ def NDVI_analysis(input_state: State) -> NDVIOutputModel:
         npy_buf.seek(0)
         s3_npy_uri = save_to_s3(npy_buf, output_bucket, s3_npy_path, content_type='application/octet-stream')
 
-        cwr = estimate_cwr_from_ndvi_and_weather(ndvi_to_kc(ndvi_noise_reduced), get_today_eto(input_state))
+        cwr = estimate_cwr_from_ndvi_and_weather(kc_map=kc_map, eto_today=get_today_eto(input_state))
         ndvi_summary = {
             "min": float(np.min(ndvi_noise_reduced)),
             "max": float(np.max(ndvi_noise_reduced)),
@@ -259,7 +259,7 @@ def NDVI_analysis(input_state: State) -> NDVIOutputModel:
 
         return {
             "user_id": input_state.user_id,
-            "ndvi_result": NDVIOutputModel(ndvi_summary=ndvi_summary, save_path=s3_npy_uri).model_dump()
+            "ndvi_result": NDVIOutputModel(ndvi_summary=ndvi_summary, save_path=s3_image_uri).model_dump()
         }
 
     except Exception as e:
