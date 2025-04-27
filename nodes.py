@@ -130,9 +130,9 @@ def weather_node(input_state: State) -> WeatherDataOutputModel:
 
 def YOLO_analysis(input_state: State) -> YoloAnalysisOutputModel:
     image_path = input_state.image_key
-    image = read_image_from_s3("qijaniproductsbucket", image_path)
+    image = read_image_from_s3("ndvi-images-bucket", image_path)
     yolo_state = YoloAnalysisOutputModel()
-    output_bucket = "qijaniproductsbucket"  # Update with your output bucket name
+    output_bucket = "ndvi-images-bucket"  # Update with your output bucket name
 
     try:
         model = YOLO("yolo11s-pest-detection/best.pt")
@@ -195,10 +195,10 @@ def NDVI_analysis(input_state: State) -> NDVIOutputModel:
         'blackadjust': 0.01,
         'low_percentile': 1
     }
-    output_bucket = "qijaniproductsbucket"  # Update with your output bucket name
+    output_bucket = "ndvi-images-bucket"  # Update with your output bucket name
 
     try:
-        image = read_image_from_s3("qijaniproductsbucket", input_state.image_key)
+        image = read_image_from_s3("ndvi-images-bucket", input_state.image_key)
         ndvi_noise_reduced, _, kc_map = full_image_processing_pipeline(
             image,
             RADIOMETRIC_PARAMS,
