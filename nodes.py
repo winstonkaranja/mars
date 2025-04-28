@@ -249,7 +249,7 @@ def NDVI_analysis(input_state: State) -> NDVIOutputModel:
         npy_buf = io.BytesIO()
         np.save(npy_buf, ndvi_noise_reduced)
         npy_buf.seek(0)
-        s3_npy_uri = save_to_s3(npy_buf, output_bucket, s3_npy_path, content_type='application/octet-stream')
+        s3_npy_uri = save_to_s3(npy_buf, output_bucket, s3_image_path, content_type='application/octet-stream')
 
         cwr = estimate_cwr_from_ndvi_and_weather(kc_map=kc_map, eto_today=get_today_eto(input_state))
         ndvi_summary = {
