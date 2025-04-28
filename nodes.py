@@ -225,8 +225,10 @@ def NDVI_analysis(input_state: State) -> NDVIOutputModel:
 
         # Generate base filename for S3
         base_filename = os.path.basename(input_state.image_key)
-        s3_image_path = f"outputs/ndvi_{base_filename}.jpg"
-        s3_npy_path = f"outputs/ndvi_{base_filename}.npy"
+        # Remove any existing extension first
+        base_filename_stripped = os.path.splitext(base_filename)[0]
+        s3_image_path = f"outputs/ndvi_{base_filename_stripped}.jpg"
+        s3_npy_path = f"outputs/ndvi_{base_filename_stripped}.npy"
 
         # Save NDVI plot to S3
         plt.figure(figsize=(10, 8))
@@ -236,7 +238,7 @@ def NDVI_analysis(input_state: State) -> NDVIOutputModel:
         
         # Save plot to bytes buffer instead of file
         img_buf = io.BytesIO()
-        plt.savefig(s3_image_path, format='jpg', dpi=300)
+        plt.savefig(img_buf, format='jpg', dpi=300)
         img_buf.seek(0)
         plt.close()
         
@@ -259,7 +261,7 @@ def NDVI_analysis(input_state: State) -> NDVIOutputModel:
 
         return {
             "user_id": input_state.user_id,
-            "ndvi_result": NDVIOutputModel(ndvi_summary=ndvi_summary, save_path=s3_image_uri).model_dump()
+            "ndvi_result": NDVIOutputModel(ndvi_summary=ndvi_summary, save_path=s3_npy_uri).model_dump()
         }
 
     except Exception as e:
