@@ -236,7 +236,7 @@ def NDVI_analysis(input_state: State) -> NDVIOutputModel:
         
         # Save plot to bytes buffer instead of file
         img_buf = io.BytesIO()
-        plt.savefig(img_buf, format='jpg', dpi=300)
+        plt.savefig(s3_image_path, format='jpg', dpi=300)
         img_buf.seek(0)
         plt.close()
         
