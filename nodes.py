@@ -261,7 +261,7 @@ def NDVI_analysis(input_state: State) -> NDVIOutputModel:
 
         return {
             "user_id": input_state.user_id,
-            "ndvi_result": NDVIOutputModel(ndvi_summary=ndvi_summary, save_path=s3_npy_uri).model_dump()
+            "ndvi_result": NDVIOutputModel(ndvi_summary=ndvi_summary, save_path=s3_image_uri).model_dump()
         }
 
     except Exception as e:
